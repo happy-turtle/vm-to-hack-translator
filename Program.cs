@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Collections.Generic;
 
 ///<summary>
 ///VM Translator program.
@@ -11,8 +9,6 @@ namespace VMtoHackTranslator
 {
     class Program
     {
-        const string AssemblyFileExtension = ".asm";
-
         static void Main(string[] args)
         {
             if(args.Length == 0)
@@ -23,11 +19,13 @@ namespace VMtoHackTranslator
 
             //read file
             Parser parser = new Parser(args[0]);
+            CodeWriter codeWriter = new CodeWriter();
 
-            List<string> asmCode = new List<string>();
             while(parser.HasMoreCommands())
             {
                 string newLine = string.Empty;
+
+                newLine = "line";
 
                 if(!string.IsNullOrWhiteSpace(newLine))
                     asmCode.Add(newLine);
@@ -35,30 +33,14 @@ namespace VMtoHackTranslator
                 parser.Advance();
             }
 
-            if(asmCode.Count > 0)
-                SaveAsmCodeFile(asmCode, args[0]);
-            else
-                Console.WriteLine("Nothing to write.");
+            codeWriter.Close(args[0]);
+
         }
 
         private static string UnknownCommand()
         {
             Console.WriteLine("Unknown command found.");
             return "##UNKNOWN-CMD###";
-        }
-
-        private static void SaveAsmCodeFile(List<string> hackCode, string filePath)
-        {
-            try
-            {
-                string directoryPath = Path.GetDirectoryName(filePath);
-                string fileName = Path.GetFileNameWithoutExtension(filePath);
-                File.WriteAllLines(directoryPath + @"\" + fileName + AssemblyFileExtension, hackCode);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
         }
     }
 }
