@@ -18,12 +18,31 @@ namespace VMtoHackTranslator
         public void WriteArithmetic(string command)
         {
             //Writes to the output file the assembly code that implements the given arithmetic command.
+            asmCode.Add("//" + command);
+  
+            string newLine = string.Empty;
+
+            newLine = "arithmetic";
+
+            if(!string.IsNullOrWhiteSpace(newLine))
+                asmCode.Add(newLine);
         }
 
         public void WritePushPop(Parser.CommandType commandType, string segment, int index)
         {
             //Writes to the output file the assembly code that implements the given command,
             //where command is either C_PUSH or C_POP.
+            if(commandType == Parser.CommandType.C_PUSH)
+                asmCode.Add("//push " + segment + " " + index);
+            else if (commandType == Parser.CommandType.C_POP)
+                asmCode.Add("//pop " + segment + " " + index);
+            
+            string newLine = string.Empty;
+
+            newLine = segment + " " + index;
+
+            if(!string.IsNullOrWhiteSpace(newLine))
+                asmCode.Add(newLine);
         }
 
         public void Close(string filePath)

@@ -42,33 +42,43 @@ namespace VMtoHackTranslator
             currentLine++;
         }
 
-        public void Reset()
-        {
-            currentLine = 0;
-        }
-
         public CommandType GetCommandType()
         {
             //Returns a constant representing the type of the current command.
             //C_ARITHMETIC is returned for for all the arithmetic/logical commands.
 
-            // string command = lines[currentLine];
-            return CommandType.C_ARITHMETIC;
+            string command = lines[currentLine];
+
+            if(command.StartsWith("push"))
+                return CommandType.C_PUSH;
+            else if(command.StartsWith("pop"))
+                return CommandType.C_POP;
+            else
+                return CommandType.C_ARITHMETIC;
         }
 
-        public string arg1()
+        public string GetArg1()
         {
             //Returns the first argument of the current command. In the case of C_ARITHMETIC
             //the command itself (add, sub, etc.) is returned. Should not be called if the current
             //command is C_RETURN.
-            return lines[currentLine].Trim('@', '(', ')');
+            string line = lines[currentLine];
+            if(line.StartsWith("push"))
+                return line.Split()[1];
+            else if(line.StartsWith("pop"))
+                return line.Split()[1];
+            else
+                return line.Trim(' ');
         }
 
-        public string arg2()
+        public int GetArg2()
         {
             //Returns the second argument of the current command. Should be called only if the current
             //command is C_PUSH, C_POP, C_FUNCTION or C_CALL.
-            return lines[currentLine].Trim('@', '(', ')');
+            if (int.TryParse(lines[currentLine].Split()[2], out int result))
+                return result;
+            else
+                return 0;
         }
 
         private static string[] StripCommentsAndWhiteSpace(string[] lines)

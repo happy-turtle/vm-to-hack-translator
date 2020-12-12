@@ -23,12 +23,16 @@ namespace VMtoHackTranslator
 
             while(parser.HasMoreCommands())
             {
-                string newLine = string.Empty;
+                Parser.CommandType commandType = parser.GetCommandType();
 
-                newLine = "line";
-
-                if(!string.IsNullOrWhiteSpace(newLine))
-                    asmCode.Add(newLine);
+                if(commandType == Parser.CommandType.C_POP || commandType == Parser.CommandType.C_PUSH)
+                {
+                    codeWriter.WritePushPop(commandType, parser.GetArg1(), parser.GetArg2());
+                }
+                else
+                {
+                    codeWriter.WriteArithmetic(parser.GetArg1());
+                }
 
                 parser.Advance();
             }
