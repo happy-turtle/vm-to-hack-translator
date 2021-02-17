@@ -1,7 +1,7 @@
 ﻿using System;
 
 ///<summary>
-///VM Translator program.
+///VM to Hack translator program.
 ///Built as part of the nand2tetris course part 2 by Shimon Schocken 
 ///and Noam Nisan, further information at www.nand2tetris.org.
 ///</summary>
@@ -29,7 +29,7 @@ namespace VMtoHackTranslator
                 {
                     codeWriter.WritePushPop(commandType, parser.GetArg1(), parser.GetArg2());
                 }
-                else
+                else if(commandType == Parser.CommandType.C_ARITHMETIC)
                 {
                     codeWriter.WriteArithmetic(parser.GetArg1());
                 }
@@ -39,12 +39,6 @@ namespace VMtoHackTranslator
 
             codeWriter.Close(args[0]);
 
-        }
-
-        private static string UnknownCommand()
-        {
-            Console.WriteLine("Unknown command found.");
-            return "##UNKNOWN-CMD###";
         }
     }
 }

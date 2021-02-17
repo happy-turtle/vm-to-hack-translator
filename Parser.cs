@@ -9,7 +9,7 @@ namespace VMtoHackTranslator
     class Parser
     {
         public enum CommandType {C_ARITHMETIC, C_PUSH, C_POP, C_LABEL, C_GOTO, 
-        C_IF, C_FUNCTION, C_RETURN, C_CALL}
+        C_IF, C_FUNCTION, C_RETURN, C_CALL, C_ERROR}
 
         string[] lines;
         int currentLine = 0;
@@ -42,10 +42,10 @@ namespace VMtoHackTranslator
             currentLine++;
         }
 
+        //Returns a constant representing the type of the current command.
+        //C_ARITHMETIC is returned for for all the arithmetic/logical commands.
         public CommandType GetCommandType()
         {
-            //Returns a constant representing the type of the current command.
-            //C_ARITHMETIC is returned for for all the arithmetic/logical commands.
 
             string command = lines[currentLine];
 
@@ -53,15 +53,22 @@ namespace VMtoHackTranslator
                 return CommandType.C_PUSH;
             else if(command.StartsWith("pop"))
                 return CommandType.C_POP;
-            else
+            else if(command.StartsWith("add") || command.StartsWith("sub") || command.StartsWith("neq") 
+            || command.StartsWith("eq") || command.StartsWith("gt") ||  command.StartsWith("lt") ||
+             command.StartsWith("and") || command.StartsWith("or") || command.StartsWith("not"))
                 return CommandType.C_ARITHMETIC;
+            else
+            {
+                UnknownCommand();
+                return CommandType.C_ERROR;
+            }
         }
 
+        //Returns the first argument of the current command. In the case of C_ARITHMETIC
+        //the command itself (add, sub, etc.) is returned. Should not be called if the current
+        //command is C_RETURN.
         public string GetArg1()
         {
-            //Returns the first argument of the current command. In the case of C_ARITHMETIC
-            //the command itself (add, sub, etc.) is returned. Should not be called if the current
-            //command is C_RETURN.
             string line = lines[currentLine];
             if(line.StartsWith("push"))
                 return line.Split()[1];
@@ -71,10 +78,10 @@ namespace VMtoHackTranslator
                 return line.Trim(' ');
         }
 
+        //Returns the second argument of the current command. Should be called only if the current
+        //command is C_PUSH, C_POP, C_FUNCTION or C_CALL.
         public int GetArg2()
         {
-            //Returns the second argument of the current command. Should be called only if the current
-            //command is C_PUSH, C_POP, C_FUNCTION or C_CALL.
             if (int.TryParse(lines[currentLine].Split()[2], out int result))
                 return result;
             else
@@ -93,6 +100,12 @@ namespace VMtoHackTranslator
                 }
             }
             return lineList.ToArray();
+        }
+        
+        private static string UnknownCommand()
+        {
+            Console.WriteLine("Unknown command found.");
+            return "##UNKNOWN-CMD###";
         }
     }
 }
