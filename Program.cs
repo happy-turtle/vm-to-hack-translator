@@ -36,9 +36,8 @@ namespace VMtoHackTranslator
 
                 parser.Advance();
             }
-
+            
             codeWriter.Close(args[0]);
-
         }
     }
 }
