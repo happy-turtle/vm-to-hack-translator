@@ -54,7 +54,7 @@ namespace VMtoHackTranslator
                 asmCode.Add("A=M");
                 asmCode.Add("D=M");
                 DecrementStackPointer();
-                // TODO // *SP == D
+                asmCode.Add("//not implemented"); // *SP == D
                 IncrementStackPointer();
             }
             else if(command == "gt")
@@ -64,7 +64,7 @@ namespace VMtoHackTranslator
                 asmCode.Add("A=M");
                 asmCode.Add("D=M");
                 DecrementStackPointer();
-                // TODO // *SP >= D
+                asmCode.Add("//not implemented"); // *SP >= D
                 IncrementStackPointer();
             }
             else if(command == "lt")
@@ -74,7 +74,7 @@ namespace VMtoHackTranslator
                 asmCode.Add("A=M");
                 asmCode.Add("D=M");
                 DecrementStackPointer();
-                // TODO // *SP <= D
+                asmCode.Add("//not implemented"); // *SP <= D
                 IncrementStackPointer();
             }
             else if(command == "and")
@@ -112,13 +112,13 @@ namespace VMtoHackTranslator
             else if(command == "not")
             {
                 DecrementStackPointer();
-                asmCode.Add("@SP"); // *SP = -*SP
+                asmCode.Add("@SP"); // *SP = !*SP
                 asmCode.Add("A=M");
                 asmCode.Add("M=!M");
                 IncrementStackPointer();
             }
             else
-                asmCode.Add("//not yet implemented");
+                asmCode.Add("//not implemented");
         }
 
         //Writes to the output file the assembly code that implements the given command,
