@@ -53,7 +53,7 @@ namespace VMtoHackTranslator
                 return CommandType.C_PUSH;
             else if(command.StartsWith("pop"))
                 return CommandType.C_POP;
-            else if(command.StartsWith("add") || command.StartsWith("sub") || command.StartsWith("neq") 
+            else if(command.StartsWith("add") || command.StartsWith("sub") || command.StartsWith("neg") 
             || command.StartsWith("eq") || command.StartsWith("gt") ||  command.StartsWith("lt") ||
              command.StartsWith("and") || command.StartsWith("or") || command.StartsWith("not"))
                 return CommandType.C_ARITHMETIC;

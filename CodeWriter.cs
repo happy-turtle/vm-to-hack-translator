@@ -22,13 +22,24 @@ namespace VMtoHackTranslator
         {
             //Write command as comment.
             asmCode.Add("//" + command);
-  
-            string newLine = string.Empty;
 
-            newLine = "//arithmetic";
-
-            if(!string.IsNullOrWhiteSpace(newLine))
-                asmCode.Add(newLine);
+            if(command == "add")
+            {
+                asmCode.Add("@SP"); // *SP - 1
+                asmCode.Add("M=M-1");
+                asmCode.Add("@SP"); // D = SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                asmCode.Add("@SP"); // *SP - 1
+                asmCode.Add("M=M-1");
+                asmCode.Add("@SP"); // M += SP
+                asmCode.Add("A=M");
+                asmCode.Add("M=M+D");
+                asmCode.Add("@SP"); // *SP + 1
+                asmCode.Add("M=M+1");
+            }
+            else
+                asmCode.Add("//not yet implemented");
         }
 
         //Writes to the output file the assembly code that implements the given command,
@@ -41,22 +52,19 @@ namespace VMtoHackTranslator
             else if (commandType == Parser.CommandType.C_POP)
                 asmCode.Add("//pop " + segment + " " + index);
             
-            string newLine = string.Empty;
-
             if(segment == "constant")
             {
-                asmCode.Add("@" + index);
+                asmCode.Add("@" + index); // D = index
                 asmCode.Add("D=A");
-                asmCode.Add("@SP");
+                asmCode.Add("@SP"); // *SP = D
                 asmCode.Add("A=M");
                 asmCode.Add("M=D");
-                asmCode.Add("@SP");
+                asmCode.Add("@SP"); // *SP + 1
                 asmCode.Add("M=M+1");
             }
             else
             {
-                newLine = segment + " " + index;
-                asmCode.Add(newLine);
+                asmCode.Add("// not yet implemented");
             }
         }
 
