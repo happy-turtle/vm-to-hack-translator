@@ -32,7 +32,89 @@ namespace VMtoHackTranslator
                 DecrementStackPointer();
                 asmCode.Add("@SP"); // *SP += M
                 asmCode.Add("A=M");
-                asmCode.Add("M=M+D");
+                asmCode.Add("M=D+M");
+                IncrementStackPointer();
+            }
+            else if(command == "sub")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // *SP -= M
+                asmCode.Add("A=M");
+                asmCode.Add("M=M-D");
+                IncrementStackPointer();
+            }
+            else if(command == "eq")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();
+                // TODO // *SP == D
+                IncrementStackPointer();
+            }
+            else if(command == "gt")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();
+                // TODO // *SP >= D
+                IncrementStackPointer();
+            }
+            else if(command == "lt")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();
+                // TODO // *SP <= D
+                IncrementStackPointer();
+            }
+            else if(command == "and")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();                
+                asmCode.Add("@SP"); // *SP && D
+                asmCode.Add("A=M");
+                asmCode.Add("M=D&M");
+                IncrementStackPointer();
+            }
+            else if(command == "or")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // D = *SP
+                asmCode.Add("A=M");
+                asmCode.Add("D=M");
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // *SP || D
+                asmCode.Add("A=M");
+                asmCode.Add("M=D|M");
+                IncrementStackPointer();
+            }
+            else if(command == "neg")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // *SP = -*SP
+                asmCode.Add("A=M");
+                asmCode.Add("M=-M");
+                IncrementStackPointer();
+            }
+            else if(command == "not")
+            {
+                DecrementStackPointer();
+                asmCode.Add("@SP"); // *SP = -*SP
+                asmCode.Add("A=M");
+                asmCode.Add("M=!M");
                 IncrementStackPointer();
             }
             else
@@ -57,10 +139,6 @@ namespace VMtoHackTranslator
                 asmCode.Add("A=M");
                 asmCode.Add("M=D");
                 IncrementStackPointer();
-            }
-            else if(segment == "eq")
-            {
-                asmCode.Add("// not yet implemented");
             }
             else
             {
