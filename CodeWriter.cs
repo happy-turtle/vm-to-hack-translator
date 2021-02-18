@@ -27,122 +27,39 @@ namespace VMtoHackTranslator
 
             if(command == "add")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP += M
-                asmCode.Add("A=M");
-                asmCode.Add("M=D+M");
-
-                IncrementStackPointer();
+                TwoFieldsArithmeticOperation("+");
             }
             else if(command == "sub")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP -= M
-                asmCode.Add("A=M");
-                asmCode.Add("M=M-D");
-
-                IncrementStackPointer();
+                TwoFieldsArithmeticOperation("-");
             }
             else if(command == "eq")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP == D
-                asmCode.Add("A=M");
-                asmCode.Add("D=D-M");
-
-                asmCode.Add("@TRUE" + trueLabelCount);
-                asmCode.Add("D;JEQ");
-
-                TrueFalseBlock();
-
-                IncrementStackPointer();
+                TrueFalseBlock("JEQ");
             }
             else if(command == "gt")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP > D
-                asmCode.Add("A=M");
-                asmCode.Add("D=M-D");
-
-                asmCode.Add("@TRUE" + trueLabelCount);
-                asmCode.Add("D;JGT");
-
-                TrueFalseBlock();
-
-                IncrementStackPointer();
+                TrueFalseBlock("JGT");
             }
             else if(command == "lt")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-                
-                asmCode.Add("@SP"); // *SP < D
-                asmCode.Add("A=M");
-                asmCode.Add("D=M-D");
-
-                asmCode.Add("@TRUE" + trueLabelCount);
-                asmCode.Add("D;JLT");
-
-                TrueFalseBlock();
-                
-                IncrementStackPointer();
+                TrueFalseBlock("JLT");
             }
             else if(command == "and")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();  
-
-                asmCode.Add("@SP"); // *SP && D
-                asmCode.Add("A=M");
-                asmCode.Add("M=D&M");
-
-                IncrementStackPointer();
+                TwoFieldsArithmeticOperation("&");
             }
             else if(command == "or")
             {
-                DecrementStackPointer();
-                GetDataAtStackPointer();
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP || D
-                asmCode.Add("A=M");
-                asmCode.Add("M=D|M");
-
-                IncrementStackPointer();
+                TwoFieldsArithmeticOperation("|");
             }
             else if(command == "neg")
             {
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP = -*SP
-                asmCode.Add("A=M");
-                asmCode.Add("M=-M");
-
-                IncrementStackPointer();
+                SingleFieldArithmeticOperation("-");
             }
             else if(command == "not")
             {
-                DecrementStackPointer();
-
-                asmCode.Add("@SP"); // *SP = !*SP
-                asmCode.Add("A=M");
-                asmCode.Add("M=!M");
-
-                IncrementStackPointer();
+                SingleFieldArithmeticOperation("!");
             }
             else
                 asmCode.Add("//not implemented");
@@ -158,19 +75,181 @@ namespace VMtoHackTranslator
             else if (commandType == Parser.CommandType.C_POP)
                 asmCode.Add("//pop " + segment + " " + index);
             
-            if(segment == "constant")
+            if(segment == "constant" && commandType == Parser.CommandType.C_PUSH)
             {
-                asmCode.Add("@" + index); // D = index
-                asmCode.Add("D=A");
-                asmCode.Add("@SP"); // *SP = D
-                asmCode.Add("A=M");
-                asmCode.Add("M=D");
-                IncrementStackPointer();
+                Push(index);
+            }
+            else if(segment == "local")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+                    Push("LCL", index);
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    Pop("LCL", index);
+                }
+            }
+            else if(segment == "argument")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+                    Push("ARG", index);
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    Pop("ARG", index);
+                }
+            }
+            else if(segment == "this")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+                    Push("THAT", index);
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    Pop("THIS", index);
+                }
+            }
+            else if (segment == "that")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+                    Push("THAT", index);
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    Pop("THAT", index);
+                }
+            }
+            else if(segment == "temp")
+            {
+                
             }
             else
             {
-                asmCode.Add("// not yet implemented");
+                asmCode.Add("// not implemented");
             }
+        }
+
+        private void SingleFieldArithmeticOperation(string operation)
+        {
+            DecrementStackPointer();
+
+            asmCode.Add("@SP"); // *SP = -*SP
+            asmCode.Add("A=M");
+            asmCode.Add("M=" + operation + "M");
+
+            IncrementStackPointer();
+        }
+
+        private void TwoFieldsArithmeticOperation(string operation)
+        {
+            DecrementStackPointer();
+            GetDataAtStackPointer();
+            DecrementStackPointer();
+
+            asmCode.Add("@SP"); // *SP += M
+            asmCode.Add("A=M");
+            asmCode.Add("M=D" + operation + "M");
+
+            IncrementStackPointer();
+        }
+
+        private void Push(int index)
+        {
+            asmCode.Add("@" + index); // D = index
+            asmCode.Add("D=A");
+
+            asmCode.Add("@SP"); // *SP = D
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+
+            IncrementStackPointer();
+        }
+
+        private void Push(string segment, int index)
+        {
+            asmCode.Add("@" + index); // D = index
+            asmCode.Add("D=A");
+
+            asmCode.Add("@" + segment); // D = *(LCL + index)
+            asmCode.Add("A=D+M");
+            asmCode.Add("D=M");
+
+            asmCode.Add("@SP"); // *SP = D
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+
+            IncrementStackPointer();
+        }
+
+        private void Pop(string segment, int index)
+        {
+            asmCode.Add("@" + index);
+            asmCode.Add("D=A");
+            asmCode.Add("@" + segment);
+            asmCode.Add("D=D+M");
+            asmCode.Add("@R13");
+            asmCode.Add("M=D");
+
+            DecrementStackPointer();
+
+            GetDataAtStackPointer();
+
+            asmCode.Add("@R13"); // *THAT = *SP
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+        }
+
+        private void TrueFalseBlock(string condition)
+        {
+            DecrementStackPointer();
+            GetDataAtStackPointer();
+            DecrementStackPointer();
+
+            asmCode.Add("@SP"); // *SP ?? D
+            asmCode.Add("A=M");
+            asmCode.Add("D=M-D");
+
+            asmCode.Add("@TRUE" + trueLabelCount);
+            asmCode.Add("D;" + condition);
+
+            asmCode.Add("@SP"); //false
+            asmCode.Add("A=M");
+            asmCode.Add("M=0");
+
+            asmCode.Add("@END" + endLabelCount);
+            asmCode.Add("0;JMP");
+
+            asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=-1");
+
+            asmCode.Add("(END" + endLabelCount++ + ")");
+            
+            IncrementStackPointer();
+        }
+
+        private void GetDataAtStackPointer()
+        {
+            asmCode.Add("@SP"); // D = *SP
+            asmCode.Add("A=M");
+            asmCode.Add("D=M");
+        }
+
+        private void DecrementStackPointer()
+        {
+            asmCode.Add("@SP"); // *SP - 1
+            asmCode.Add("M=M-1");
+        }
+
+        private void IncrementStackPointer()
+        {
+            asmCode.Add("@SP"); // *SP + 1
+            asmCode.Add("M=M+1");
         }
 
         public void Close(string filePath)
@@ -193,42 +272,6 @@ namespace VMtoHackTranslator
             {
                 Console.WriteLine(e.Message);
             }
-        }
-
-        private void TrueFalseBlock()
-        {
-            asmCode.Add("@SP"); //false
-            asmCode.Add("A=M");
-            asmCode.Add("M=0");
-
-            asmCode.Add("@END" + endLabelCount);
-            asmCode.Add("0;JMP");
-
-            asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
-            asmCode.Add("@SP");
-            asmCode.Add("A=M");
-            asmCode.Add("M=-1");
-
-            asmCode.Add("(END" + endLabelCount++ + ")");
-        }
-
-        private void GetDataAtStackPointer()
-        {
-            asmCode.Add("@SP"); // D = *SP
-            asmCode.Add("A=M");
-            asmCode.Add("D=M");
-        }
-
-        private void DecrementStackPointer()
-        {
-            asmCode.Add("@SP"); // *SP - 1
-            asmCode.Add("M=M-1");
-        }
-
-        private void IncrementStackPointer()
-        {
-            asmCode.Add("@SP"); // *SP + 1
-            asmCode.Add("M=M+1");
         }
     }
 }
