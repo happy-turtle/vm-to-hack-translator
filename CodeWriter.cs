@@ -45,7 +45,7 @@ namespace VMtoHackTranslator
 
                 asmCode.Add("@SP"); // *SP -= M
                 asmCode.Add("A=M");
-                asmCode.Add("M=D-M");
+                asmCode.Add("M=M-D");
 
                 IncrementStackPointer();
             }
@@ -54,7 +54,7 @@ namespace VMtoHackTranslator
                 DecrementStackPointer();
                 GetDataAtStackPointer();
                 DecrementStackPointer();
-                
+
                 asmCode.Add("@SP"); // *SP == D
                 asmCode.Add("A=M");
                 asmCode.Add("D=D-M");
@@ -62,19 +62,7 @@ namespace VMtoHackTranslator
                 asmCode.Add("@TRUE" + trueLabelCount);
                 asmCode.Add("D;JEQ");
 
-                asmCode.Add("@SP"); //false
-                asmCode.Add("A=M");
-                asmCode.Add("M=0");    
-
-                asmCode.Add("@END" + endLabelCount);
-                asmCode.Add("0;JMP");
-            
-                asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
-                asmCode.Add("@SP");
-                asmCode.Add("A=M");
-                asmCode.Add("M=-1");
-
-                asmCode.Add("(END" + endLabelCount++ + ")");
+                TrueFalseBlock();
 
                 IncrementStackPointer();
             }
@@ -86,24 +74,12 @@ namespace VMtoHackTranslator
 
                 asmCode.Add("@SP"); // *SP > D
                 asmCode.Add("A=M");
-                asmCode.Add("D=D-M");
+                asmCode.Add("D=M-D");
 
                 asmCode.Add("@TRUE" + trueLabelCount);
                 asmCode.Add("D;JGT");
 
-                asmCode.Add("@SP"); //false
-                asmCode.Add("A=M");
-                asmCode.Add("M=0");     
-
-                asmCode.Add("@END" + endLabelCount);           
-                asmCode.Add("0;JMP");
-            
-                asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
-                asmCode.Add("@SP");
-                asmCode.Add("A=M");
-                asmCode.Add("M=-1");
-
-                asmCode.Add("(END" + endLabelCount++ + ")");
+                TrueFalseBlock();
 
                 IncrementStackPointer();
             }
@@ -115,23 +91,12 @@ namespace VMtoHackTranslator
                 
                 asmCode.Add("@SP"); // *SP < D
                 asmCode.Add("A=M");
-                asmCode.Add("D=D-M");
+                asmCode.Add("D=M-D");
 
                 asmCode.Add("@TRUE" + trueLabelCount);
                 asmCode.Add("D;JLT");
 
-                asmCode.Add("@SP"); //false
-                asmCode.Add("A=M");
-                asmCode.Add("M=0");
-
-                asmCode.Add("@END" + endLabelCount);
-                asmCode.Add("0;JMP");
-            
-                asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
-                asmCode.Add("@SP");
-                asmCode.Add("A=M");
-                asmCode.Add("M=-1");
-                asmCode.Add("(END" + endLabelCount++ + ")");
+                TrueFalseBlock();
                 
                 IncrementStackPointer();
             }
@@ -228,6 +193,23 @@ namespace VMtoHackTranslator
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        private void TrueFalseBlock()
+        {
+            asmCode.Add("@SP"); //false
+            asmCode.Add("A=M");
+            asmCode.Add("M=0");
+
+            asmCode.Add("@END" + endLabelCount);
+            asmCode.Add("0;JMP");
+
+            asmCode.Add("(TRUE" + trueLabelCount++ + ")"); //true
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=-1");
+
+            asmCode.Add("(END" + endLabelCount++ + ")");
         }
 
         private void GetDataAtStackPointer()
