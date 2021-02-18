@@ -9,10 +9,11 @@ namespace VMtoHackTranslator
     class CodeWriter
     {
         const string AssemblyFileExtension = ".asm";
+        const int TempMemLocation = 5;
         
-        private List<string> asmCode;
-        private int trueLabelCount = 0;
-        private int endLabelCount = 0;
+        List<string> asmCode;
+        int trueLabelCount = 0;
+        int endLabelCount = 0;
 
         public CodeWriter()
         {
@@ -82,50 +83,88 @@ namespace VMtoHackTranslator
             else if(segment == "local")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
                     Push("LCL", index);
-                }
                 else if(commandType == Parser.CommandType.C_POP)
-                {
                     Pop("LCL", index);
-                }
             }
             else if(segment == "argument")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
                     Push("ARG", index);
-                }
                 else if(commandType == Parser.CommandType.C_POP)
-                {
                     Pop("ARG", index);
-                }
             }
             else if(segment == "this")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
-                    Push("THAT", index);
-                }
+                    Push("THIS", index);
                 else if(commandType == Parser.CommandType.C_POP)
-                {
                     Pop("THIS", index);
-                }
             }
             else if (segment == "that")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
                     Push("THAT", index);
-                }
                 else if(commandType == Parser.CommandType.C_POP)
-                {
                     Pop("THAT", index);
-                }
             }
             else if(segment == "temp")
             {
-                
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+                    asmCode.Add("@" + index); // D = index
+                    asmCode.Add("D=A");
+
+                    asmCode.Add("@" + TempMemLocation); // D = *(LCL + index)
+                    asmCode.Add("A=D+A");
+                    asmCode.Add("D=M");
+
+                    asmCode.Add("@SP"); // *SP = D
+                    asmCode.Add("A=M");
+                    asmCode.Add("M=D");
+
+                    IncrementStackPointer();
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    asmCode.Add("@" + index);
+                    asmCode.Add("D=A");
+
+                    asmCode.Add("@" + TempMemLocation);
+                    asmCode.Add("D=D+A");
+                    asmCode.Add("@R13");
+                    asmCode.Add("M=D");
+
+                    DecrementStackPointer();
+
+                    GetDataAtStackPointer();
+
+                    asmCode.Add("@R13"); // *THAT = *SP
+                    asmCode.Add("A=M");
+                    asmCode.Add("M=D");
+                }
+            }
+            else if(segment == "pointer")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+
+                }
+            }
+            else if(segment == "static")
+            {
+                if(commandType == Parser.CommandType.C_PUSH)
+                {
+
+                }
+                else if(commandType == Parser.CommandType.C_POP)
+                {
+                    
+                }
             }
             else
             {
@@ -152,7 +191,10 @@ namespace VMtoHackTranslator
 
             asmCode.Add("@SP"); // *SP += M
             asmCode.Add("A=M");
-            asmCode.Add("M=D" + operation + "M");
+            if(operation == "-")
+                asmCode.Add("M=M-D");
+            else
+                asmCode.Add("M=D" + operation + "M");
 
             IncrementStackPointer();
         }
@@ -169,12 +211,12 @@ namespace VMtoHackTranslator
             IncrementStackPointer();
         }
 
-        private void Push(string segment, int index)
+        private void Push(string symbol, int index)
         {
             asmCode.Add("@" + index); // D = index
             asmCode.Add("D=A");
 
-            asmCode.Add("@" + segment); // D = *(LCL + index)
+            asmCode.Add("@" + symbol); // D = *(LCL + index)
             asmCode.Add("A=D+M");
             asmCode.Add("D=M");
 
@@ -185,11 +227,11 @@ namespace VMtoHackTranslator
             IncrementStackPointer();
         }
 
-        private void Pop(string segment, int index)
+        private void Pop(string symbol, int index)
         {
             asmCode.Add("@" + index);
             asmCode.Add("D=A");
-            asmCode.Add("@" + segment);
+            asmCode.Add("@" + symbol);
             asmCode.Add("D=D+M");
             asmCode.Add("@R13");
             asmCode.Add("M=D");
@@ -198,7 +240,7 @@ namespace VMtoHackTranslator
 
             GetDataAtStackPointer();
 
-            asmCode.Add("@R13"); // *THAT = *SP
+            asmCode.Add("@R13"); // *addr = *SP
             asmCode.Add("A=M");
             asmCode.Add("M=D");
         }
