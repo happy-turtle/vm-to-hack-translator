@@ -10,6 +10,7 @@ namespace VMtoHackTranslator
     {
         public enum CommandType {C_ARITHMETIC, C_PUSH, C_POP, C_LABEL, C_GOTO, 
         C_IF, C_FUNCTION, C_RETURN, C_CALL, C_ERROR}
+        public readonly string fileName;
 
         string[] lines;
         int currentLine = 0;
@@ -19,6 +20,7 @@ namespace VMtoHackTranslator
             try
             {
                 lines = StripCommentsAndWhiteSpace(File.ReadAllLines(filePath));
+                fileName = Path.GetFileNameWithoutExtension(filePath);
             }
             catch(Exception e)
             {

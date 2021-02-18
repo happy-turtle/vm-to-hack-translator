@@ -19,7 +19,7 @@ namespace VMtoHackTranslator
 
             //read file
             Parser parser = new Parser(args[0]);
-            CodeWriter codeWriter = new CodeWriter();
+            CodeWriter codeWriter = new CodeWriter(parser.fileName);
 
             while(parser.HasMoreCommands())
             {

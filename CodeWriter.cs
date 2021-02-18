@@ -10,14 +10,16 @@ namespace VMtoHackTranslator
     {
         const string AssemblyFileExtension = ".asm";
         const int TempMemLocation = 5;
+        readonly string staticIdentifier;
         
         List<string> asmCode;
         int trueLabelCount = 0;
         int endLabelCount = 0;
 
-        public CodeWriter()
+        public CodeWriter(string fileName)
         {
             asmCode = new List<string>();
+            this.staticIdentifier = fileName + ".";
         }
 
         //Writes to the output file the assembly code that implements the given arithmetic command.
@@ -27,41 +29,23 @@ namespace VMtoHackTranslator
             asmCode.Add("//" + command);
 
             if(command == "add")
-            {
                 TwoFieldsArithmeticOperation("+");
-            }
             else if(command == "sub")
-            {
                 TwoFieldsArithmeticOperation("-");
-            }
             else if(command == "eq")
-            {
                 TrueFalseBlock("JEQ");
-            }
             else if(command == "gt")
-            {
                 TrueFalseBlock("JGT");
-            }
             else if(command == "lt")
-            {
                 TrueFalseBlock("JLT");
-            }
             else if(command == "and")
-            {
                 TwoFieldsArithmeticOperation("&");
-            }
             else if(command == "or")
-            {
                 TwoFieldsArithmeticOperation("|");
-            }
             else if(command == "neg")
-            {
                 SingleFieldArithmeticOperation("-");
-            }
             else if(command == "not")
-            {
                 SingleFieldArithmeticOperation("!");
-            }
             else
                 asmCode.Add("//not implemented");
         }
@@ -77,9 +61,7 @@ namespace VMtoHackTranslator
                 asmCode.Add("//pop " + segment + " " + index);
             
             if(segment == "constant" && commandType == Parser.CommandType.C_PUSH)
-            {
                 Push(index);
-            }
             else if(segment == "local")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
@@ -112,63 +94,122 @@ namespace VMtoHackTranslator
             {
                 if(commandType == Parser.CommandType.C_PUSH)
                 {
-                    asmCode.Add("@" + index); // D = index
-                    asmCode.Add("D=A");
-
-                    asmCode.Add("@" + TempMemLocation); // D = *(LCL + index)
-                    asmCode.Add("A=D+A");
-                    asmCode.Add("D=M");
-
-                    asmCode.Add("@SP"); // *SP = D
-                    asmCode.Add("A=M");
-                    asmCode.Add("M=D");
-
-                    IncrementStackPointer();
+                    PushTemp(index);
                 }
                 else if(commandType == Parser.CommandType.C_POP)
                 {
-                    asmCode.Add("@" + index);
-                    asmCode.Add("D=A");
-
-                    asmCode.Add("@" + TempMemLocation);
-                    asmCode.Add("D=D+A");
-                    asmCode.Add("@R13");
-                    asmCode.Add("M=D");
-
-                    DecrementStackPointer();
-
-                    GetDataAtStackPointer();
-
-                    asmCode.Add("@R13"); // *THAT = *SP
-                    asmCode.Add("A=M");
-                    asmCode.Add("M=D");
+                    PopTemp(index);
                 }
             }
             else if(segment == "pointer")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
-
-                }
+                    PushPointer(index);
                 else if(commandType == Parser.CommandType.C_POP)
-                {
-
-                }
+                    PopPointer(index);
             }
             else if(segment == "static")
             {
                 if(commandType == Parser.CommandType.C_PUSH)
-                {
-
-                }
+                    PushStatic(index);
                 else if(commandType == Parser.CommandType.C_POP)
-                {
-                    
-                }
+                    PopStatic(index);
             }
             else
-            {
                 asmCode.Add("// not implemented");
+        }
+
+        private void PopStatic(int index)
+        {
+            DecrementStackPointer();
+
+            GetDataAtStackPointer();
+
+            asmCode.Add("@" + staticIdentifier + index);
+            asmCode.Add("M=D");
+        }
+
+        private void PushStatic(int index)
+        {
+            asmCode.Add("@" + staticIdentifier + index);
+            asmCode.Add("D=M");
+
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+
+            IncrementStackPointer();
+        }
+
+        private void PopTemp(int index)
+        {
+            asmCode.Add("@" + index);
+            asmCode.Add("D=A");
+
+            asmCode.Add("@" + TempMemLocation);
+            asmCode.Add("D=D+A");
+            asmCode.Add("@R13");
+            asmCode.Add("M=D");
+
+            DecrementStackPointer();
+
+            GetDataAtStackPointer();
+
+            asmCode.Add("@R13"); // *THAT = *SP
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+        }
+
+        private void PushTemp(int index)
+        {
+            asmCode.Add("@" + index); // D = index
+            asmCode.Add("D=A");
+
+            asmCode.Add("@" + TempMemLocation); // D = *(LCL + index)
+            asmCode.Add("A=D+A");
+            asmCode.Add("D=M");
+
+            asmCode.Add("@SP"); // *SP = D
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+
+            IncrementStackPointer();
+        }
+
+        private void PushPointer(int index)
+        {
+            if (index == 0)
+            {
+                asmCode.Add("@THIS");
+                asmCode.Add("D=M");
+                asmCode.Add("@SP");
+                asmCode.Add("A=M");
+                asmCode.Add("M=D");
+            }
+            else if (index == 1)
+            {
+                asmCode.Add("@THAT");
+                asmCode.Add("D=M");
+                asmCode.Add("@SP");
+                asmCode.Add("A=M");
+                asmCode.Add("M=D");
+            }
+            IncrementStackPointer();
+        }
+
+        private void PopPointer(int index)
+        {
+            DecrementStackPointer();
+            GetDataAtStackPointer();
+            if (index == 0)
+            {
+                asmCode.Add("@THIS");
+                asmCode.Add("M=D");
+            }
+            else if (index == 1)
+            {
+                asmCode.Add("@THAT");
+                asmCode.Add("M=D");
             }
         }
 
