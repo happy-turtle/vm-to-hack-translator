@@ -10,16 +10,51 @@ namespace VMtoHackTranslator
     {
         const string AssemblyFileExtension = ".asm";
         const int TempMemLocation = 5;
-        readonly string staticIdentifier;
         
-        List<string> asmCode;
+        string staticIdentifier;
+        List<string> asmCode = new List<string>();
         int trueLabelCount = 0;
         int endLabelCount = 0;
 
-        public CodeWriter(string fileName)
+        public void SetFileName(string fileName)
         {
-            asmCode = new List<string>();
-            this.staticIdentifier = fileName + ".";
+            asmCode.Clear();
+            staticIdentifier = fileName + ".";
+        }
+
+        public void WriteInit()
+        {
+
+        }
+
+        public void WriteLabel(string label)
+        {
+
+        }
+
+        public void WriteGoto(string label)
+        {
+
+        }
+
+        public void WriteIf(string label)
+        {
+
+        }
+
+        public void WriteFunction(string functionName, int numVars)
+        {
+
+        }
+
+        public void WriteCall(string functionName, int numArgs)
+        {
+
+        }
+
+        public void WriteReturn()
+        {
+
         }
 
         //Writes to the output file the assembly code that implements the given arithmetic command.

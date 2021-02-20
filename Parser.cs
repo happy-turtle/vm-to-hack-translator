@@ -15,12 +15,12 @@ namespace VMtoHackTranslator
         string[] lines;
         int currentLine = 0;
 
-        public Parser(string filePath)
+        public void ReadFile(string filePath)
         {
             try
             {
                 lines = StripCommentsAndWhiteSpace(File.ReadAllLines(filePath));
-                fileName = Path.GetFileNameWithoutExtension(filePath);
+                currentLine = 0;
             }
             catch(Exception e)
             {

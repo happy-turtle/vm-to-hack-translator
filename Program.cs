@@ -10,6 +10,9 @@ namespace VMtoHackTranslator
 {
     class Program
     {
+        static Parser parser = new Parser();
+        static CodeWriter codeWriter = new CodeWriter();
+
         static void Main(string[] args)
         {
             if (args.Length == 0)
@@ -17,7 +20,7 @@ namespace VMtoHackTranslator
                 Console.WriteLine("No argument given. Path for input file must be specified.");
                 return;
             }
-
+            
             FileAttributes attributes = File.GetAttributes(args[0]);
             if(attributes.HasFlag(FileAttributes.Directory))
             {
@@ -36,8 +39,8 @@ namespace VMtoHackTranslator
         private static void TranslateFile(string path)
         {
             //read file
-            Parser parser = new Parser(path);
-            CodeWriter codeWriter = new CodeWriter(parser.fileName);
+            parser.ReadFile(path);
+            codeWriter.SetFileName(Path.GetFileNameWithoutExtension(path));
 
             while (parser.HasMoreCommands())
             {
