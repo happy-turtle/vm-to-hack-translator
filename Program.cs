@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 ///<summary>
 ///VM to Hack translator program.
@@ -11,33 +12,50 @@ namespace VMtoHackTranslator
     {
         static void Main(string[] args)
         {
-            if(args.Length == 0)
+            if (args.Length == 0)
             {
                 Console.WriteLine("No argument given. Path for input file must be specified.");
                 return;
             }
 
+            FileAttributes attributes = File.GetAttributes(args[0]);
+            if(attributes.HasFlag(FileAttributes.Directory))
+            {
+                string[] files = Directory.GetFiles(args[0], "*.vm");
+                foreach(string filePath in files)
+                {
+                    TranslateFile(filePath);
+                }
+            }
+            else
+            {
+                TranslateFile(args[0]);
+            }
+        }
+
+        private static void TranslateFile(string path)
+        {
             //read file
-            Parser parser = new Parser(args[0]);
+            Parser parser = new Parser(path);
             CodeWriter codeWriter = new CodeWriter(parser.fileName);
 
-            while(parser.HasMoreCommands())
+            while (parser.HasMoreCommands())
             {
                 Parser.CommandType commandType = parser.GetCommandType();
 
-                if(commandType == Parser.CommandType.C_POP || commandType == Parser.CommandType.C_PUSH)
+                if (commandType == Parser.CommandType.C_POP || commandType == Parser.CommandType.C_PUSH)
                 {
                     codeWriter.WritePushPop(commandType, parser.GetArg1(), parser.GetArg2());
                 }
-                else if(commandType == Parser.CommandType.C_ARITHMETIC)
+                else if (commandType == Parser.CommandType.C_ARITHMETIC)
                 {
                     codeWriter.WriteArithmetic(parser.GetArg1());
                 }
 
                 parser.Advance();
             }
-            
-            codeWriter.Close(args[0]);
+
+            codeWriter.Close(path);
         }
     }
 }

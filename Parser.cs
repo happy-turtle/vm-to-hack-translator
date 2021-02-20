@@ -59,6 +59,18 @@ namespace VMtoHackTranslator
             || command.StartsWith("eq") || command.StartsWith("gt") ||  command.StartsWith("lt") ||
              command.StartsWith("and") || command.StartsWith("or") || command.StartsWith("not"))
                 return CommandType.C_ARITHMETIC;
+            else if(command.StartsWith("goto"))
+                return CommandType.C_GOTO;
+            else if(command.StartsWith("if-goto"))
+                return CommandType.C_IF;
+            else if(command.StartsWith("label"))
+                return CommandType.C_LABEL;
+            else if(command.StartsWith("call"))
+                return CommandType.C_CALL;
+            else if(command.StartsWith("function"))
+                return CommandType.C_FUNCTION;
+            else if(command.StartsWith("return"))
+                return CommandType.C_RETURN;
             else
             {
                 UnknownCommand();
