@@ -11,7 +11,8 @@ namespace VMtoHackTranslator
         const string AssemblyFileExtension = ".asm";
         const int TempMemLocation = 5;
         
-        string staticIdentifier;
+        string fileIdentifier;
+        string retAddrLabel;
         List<string> asmCode = new List<string>();
         int trueLabelCount = 0;
         int endLabelCount = 0;
@@ -19,7 +20,7 @@ namespace VMtoHackTranslator
         public void SetFileName(string fileName)
         {
             asmCode.Clear();
-            staticIdentifier = fileName + ".";
+            fileIdentifier = fileName + ".";
         }
 
         public void WriteInit()
@@ -40,8 +41,7 @@ namespace VMtoHackTranslator
             //Write command as comment.
             asmCode.Add("//goto " + label);
 
-            asmCode.Add("@" + label);
-            asmCode.Add("0;JMP");
+            Goto(label);
         }
 
         public void WriteIf(string label)
@@ -58,17 +58,32 @@ namespace VMtoHackTranslator
 
         public void WriteFunction(string functionName, int numVars)
         {
+            //Write command as comment.
+            asmCode.Add("//function " + functionName + " " + numVars);
 
+            asmCode.Add("(" + fileIdentifier + functionName + ")");
+            for(int i = 0; i < numVars; i++)
+            {
+                Push(0);
+                Pop("LCL", i);
+            }
         }
 
         public void WriteCall(string functionName, int numArgs)
         {
+            //Write command as comment.
+            asmCode.Add("//call " + functionName + " " + numArgs);
 
+            retAddrLabel = functionName + "$ret." + numArgs;
+            asmCode.Add("(" + retAddrLabel + ")");
         }
 
         public void WriteReturn()
         {
+            //Write command as comment.
+            asmCode.Add("//return");
 
+            Goto(retAddrLabel);
         }
 
         //Writes to the output file the assembly code that implements the given arithmetic command.
@@ -168,19 +183,25 @@ namespace VMtoHackTranslator
                 asmCode.Add("// not implemented");
         }
 
+        private void Goto(string label)
+        {
+            asmCode.Add("@" + label);
+            asmCode.Add("0;JMP");
+        }
+
         private void PopStatic(int index)
         {
             DecrementStackPointer();
 
             GetDataAtStackPointer();
 
-            asmCode.Add("@" + staticIdentifier + index);
+            asmCode.Add("@" + fileIdentifier + index);
             asmCode.Add("M=D");
         }
 
         private void PushStatic(int index)
         {
-            asmCode.Add("@" + staticIdentifier + index);
+            asmCode.Add("@" + fileIdentifier + index);
             asmCode.Add("D=M");
 
             asmCode.Add("@SP");
