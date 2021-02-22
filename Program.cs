@@ -47,13 +47,15 @@ namespace VMtoHackTranslator
                 Parser.CommandType commandType = parser.GetCommandType();
 
                 if (commandType == Parser.CommandType.C_POP || commandType == Parser.CommandType.C_PUSH)
-                {
-                    codeWriter.WritePushPop(commandType, parser.GetArg1(), parser.GetArg2());
-                }
+                    codeWriter.WritePushPop(commandType, parser.GetArg1(commandType), parser.GetArg2());
                 else if (commandType == Parser.CommandType.C_ARITHMETIC)
-                {
-                    codeWriter.WriteArithmetic(parser.GetArg1());
-                }
+                    codeWriter.WriteArithmetic(parser.GetArg1(commandType));
+                else if (commandType == Parser.CommandType.C_GOTO)
+                    codeWriter.WriteGoto(parser.GetArg1(commandType));
+                else if (commandType == Parser.CommandType.C_IF)
+                    codeWriter.WriteIf(parser.GetArg1(commandType));
+                else if (commandType == Parser.CommandType.C_LABEL)
+                    codeWriter.WriteLabel(parser.GetArg1(commandType));
 
                 parser.Advance();
             }

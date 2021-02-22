@@ -29,17 +29,31 @@ namespace VMtoHackTranslator
 
         public void WriteLabel(string label)
         {
+            //Write command as comment.
+            asmCode.Add("//label " + label);
 
+            asmCode.Add("(" + label + ")");
         }
 
         public void WriteGoto(string label)
         {
+            //Write command as comment.
+            asmCode.Add("//goto " + label);
 
+            asmCode.Add("@" + label);
+            asmCode.Add("0;JMP");
         }
 
         public void WriteIf(string label)
         {
+            //Write command as comment.
+            asmCode.Add("//if-goto " + label);
 
+            DecrementStackPointer();
+            GetDataAtStackPointer();
+
+            asmCode.Add("@" + label);
+            asmCode.Add("D;JNE");
         }
 
         public void WriteFunction(string functionName, int numVars)

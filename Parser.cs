@@ -10,8 +10,7 @@ namespace VMtoHackTranslator
     {
         public enum CommandType {C_ARITHMETIC, C_PUSH, C_POP, C_LABEL, C_GOTO, 
         C_IF, C_FUNCTION, C_RETURN, C_CALL, C_ERROR}
-        public readonly string fileName;
-
+        
         string[] lines;
         int currentLine = 0;
 
@@ -81,15 +80,12 @@ namespace VMtoHackTranslator
         //Returns the first argument of the current command. In the case of C_ARITHMETIC
         //the command itself (add, sub, etc.) is returned. Should not be called if the current
         //command is C_RETURN.
-        public string GetArg1()
+        public string GetArg1(CommandType commandType)
         {
-            string line = lines[currentLine];
-            if(line.StartsWith("push"))
-                return line.Split()[1];
-            else if(line.StartsWith("pop"))
-                return line.Split()[1];
+            if(commandType == CommandType.C_ARITHMETIC)
+                return lines[currentLine].Trim(' ');
             else
-                return line.Trim(' ');
+                return lines[currentLine].Split()[1];
         }
 
         //Returns the second argument of the current command. Should be called only if the current
