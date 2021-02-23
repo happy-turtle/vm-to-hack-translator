@@ -12,6 +12,7 @@ namespace VMtoHackTranslator
         const int TempMemLocation = 5;
         
         string fileIdentifier;
+        string retAddrLabel;
         List<string> asmCode = new List<string>();
         int trueLabelCount = 0;
         int endLabelCount = 0;
@@ -67,11 +68,12 @@ namespace VMtoHackTranslator
             //Write command as comment.
             asmCode.Add("//function " + functionName + " " + numVars);
 
-            asmCode.Add("(" + fileIdentifier + functionName + ")");
+            asmCode.Add("(" + functionName + ")");
             for(int i = 0; i < numVars; i++)
             {
                 Push(0);
                 Pop("LCL", i);
+                IncrementStackPointer();
             }
         }
 
@@ -80,7 +82,7 @@ namespace VMtoHackTranslator
             //Write command as comment.
             asmCode.Add("//call " + functionName + " " + numArgs);
 
-            string retAddrLabel = functionName + "$ret." + numArgs;
+            retAddrLabel = functionName + "$ret." + numArgs;
 
             asmCode.Add("@" + retAddrLabel); //push retAddrLabel
             asmCode.Add("D=A");
@@ -127,9 +129,11 @@ namespace VMtoHackTranslator
             asmCode.Add("M=D");
 
             asmCode.Add("@SP"); //LCL = SP // Repositions LCL
-            asmCode.Add("D=A");
+            asmCode.Add("D=M");
             asmCode.Add("@LCL"); 
             asmCode.Add("M=D");
+
+            Goto(functionName); // goto functionName // Transfers control to the called function
 
             asmCode.Add("(" + retAddrLabel + ")"); //(retAddrLabel)
         }
@@ -144,17 +148,19 @@ namespace VMtoHackTranslator
             asmCode.Add("@R14"); // endFrame = @R14 
             asmCode.Add("M=D");
 
-            asmCode.Add("@5"); // retAddr = *(endFrame – 5) // gets the return address
-            asmCode.Add("D=D-A");
+            asmCode.Add("@5"); // retAddr = *(endFrame – 5) // gets the return address 
+            asmCode.Add("A=D-A");
+            asmCode.Add("D=M");
             asmCode.Add("@R15"); // retAddr = @R15
             asmCode.Add("M=D");
             
             Pop("ARG", 0); // *ARG = pop() // repositions the return value for the caller
 
             asmCode.Add("@ARG"); // SP = ARG + 1 // repositions SP of the caller
-            asmCode.Add("D=M+1");
+            asmCode.Add("D=M");
             asmCode.Add("@SP");
             asmCode.Add("M=D");
+            IncrementStackPointer();
 
             asmCode.Add("@R14"); // THAT = *(endFrame – 1) // restores THAT of the caller
             asmCode.Add("M=M-1");
@@ -186,6 +192,7 @@ namespace VMtoHackTranslator
 
             asmCode.Add("@R15"); // goto retAddr
             asmCode.Add("A=M");
+            asmCode.Add("0;JMP");
         }
 
         //Writes to the output file the assembly code that implements the given arithmetic command.

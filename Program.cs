@@ -32,7 +32,7 @@ namespace VMtoHackTranslator
                 return;
             }
 
-            // codeWriter.WriteInit();
+            codeWriter.WriteInit();
 
             if(attributes.HasFlag(FileAttributes.Directory))
             {
