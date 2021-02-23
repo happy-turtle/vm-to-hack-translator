@@ -12,8 +12,8 @@ namespace VMtoHackTranslator
         const int TempMemLocation = 5;
         
         string fileIdentifier;
-        string retAddrLabel;
         List<string> asmCode = new List<string>();
+        int returnCountId = 0;
         int trueLabelCount = 0;
         int endLabelCount = 0;
 
@@ -82,7 +82,7 @@ namespace VMtoHackTranslator
             //Write command as comment.
             asmCode.Add("//call " + functionName + " " + numArgs);
 
-            retAddrLabel = functionName + "$ret." + numArgs;
+            string retAddrLabel = functionName + "$" + returnCountId++ + "ret." + numArgs;
 
             asmCode.Add("@" + retAddrLabel); //push retAddrLabel
             asmCode.Add("D=A");
