@@ -12,20 +12,26 @@ namespace VMtoHackTranslator
         const int TempMemLocation = 5;
         
         string fileIdentifier;
-        string retAddrLabel;
         List<string> asmCode = new List<string>();
         int trueLabelCount = 0;
         int endLabelCount = 0;
 
         public void SetFileName(string fileName)
         {
-            asmCode.Clear();
             fileIdentifier = fileName + ".";
         }
 
         public void WriteInit()
         {
+            //Write command as comment.
+            asmCode.Add("//init");
 
+            // Bootstrap code            
+            asmCode.Add("@256"); // SP = 256
+            asmCode.Add("D=A");
+            asmCode.Add("@SP");
+            asmCode.Add("M=D");
+            WriteCall("Sys.init"); //call Sys.init
         }
 
         public void WriteLabel(string label)
@@ -69,13 +75,63 @@ namespace VMtoHackTranslator
             }
         }
 
-        public void WriteCall(string functionName, int numArgs)
+        public void WriteCall(string functionName, int numArgs = 0)
         {
             //Write command as comment.
             asmCode.Add("//call " + functionName + " " + numArgs);
 
-            retAddrLabel = functionName + "$ret." + numArgs;
-            asmCode.Add("(" + retAddrLabel + ")");
+            string retAddrLabel = functionName + "$ret." + numArgs;
+
+            asmCode.Add("@" + retAddrLabel); //push retAddrLabel
+            asmCode.Add("D=A");
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+            IncrementStackPointer();
+
+            asmCode.Add("@LCL"); //push LCL
+            asmCode.Add("D=M");
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+            IncrementStackPointer();
+
+            asmCode.Add("@ARG"); //push ARG
+            asmCode.Add("D=M");
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+            IncrementStackPointer();
+
+            asmCode.Add("@THIS"); //push THIS
+            asmCode.Add("D=M");
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+            IncrementStackPointer();
+
+            asmCode.Add("@THAT"); //push THAT
+            asmCode.Add("D=M");
+            asmCode.Add("@SP");
+            asmCode.Add("A=M");
+            asmCode.Add("M=D");
+            IncrementStackPointer();
+
+            asmCode.Add("@SP"); // ARG = SP-5-nArgs // Repositions ARG
+            asmCode.Add("D=M");
+            asmCode.Add("@5");
+            asmCode.Add("D=D-A");
+            asmCode.Add("@" + numArgs);
+            asmCode.Add("D=D-A");
+            asmCode.Add("@ARG"); 
+            asmCode.Add("M=D");
+
+            asmCode.Add("@SP"); //LCL = SP // Repositions LCL
+            asmCode.Add("D=A");
+            asmCode.Add("@LCL"); 
+            asmCode.Add("M=D");
+
+            asmCode.Add("(" + retAddrLabel + ")"); //(retAddrLabel)
         }
 
         public void WriteReturn()
@@ -83,7 +139,53 @@ namespace VMtoHackTranslator
             //Write command as comment.
             asmCode.Add("//return");
 
-            Goto(retAddrLabel);
+            asmCode.Add("@LCL"); // endFrame = LCL // endframe is a temporary variable
+            asmCode.Add("D=M");
+            asmCode.Add("@R14"); // endFrame = @R14 
+            asmCode.Add("M=D");
+
+            asmCode.Add("@5"); // retAddr = *(endFrame – 5) // gets the return address
+            asmCode.Add("D=D-A");
+            asmCode.Add("@R15"); // retAddr = @R15
+            asmCode.Add("M=D");
+            
+            Pop("ARG", 0); // *ARG = pop() // repositions the return value for the caller
+
+            asmCode.Add("@ARG"); // SP = ARG + 1 // repositions SP of the caller
+            asmCode.Add("D=M+1");
+            asmCode.Add("@SP");
+            asmCode.Add("M=D");
+
+            asmCode.Add("@R14"); // THAT = *(endFrame – 1) // restores THAT of the caller
+            asmCode.Add("M=M-1");
+            asmCode.Add("A=M");
+            asmCode.Add("D=M");
+            asmCode.Add("@THAT");
+            asmCode.Add("M=D");
+
+            asmCode.Add("@R14");  // THIS = *(endFrame – 2) // restores THIS of the caller
+            asmCode.Add("M=M-1");
+            asmCode.Add("A=M");
+            asmCode.Add("D=M");
+            asmCode.Add("@THIS");
+            asmCode.Add("M=D");
+
+            asmCode.Add("@R14");
+            asmCode.Add("M=M-1"); // ARG = *(endFrame – 3) // restores ARG of the caller
+            asmCode.Add("A=M");
+            asmCode.Add("D=M");
+            asmCode.Add("@ARG");
+            asmCode.Add("M=D");
+
+            asmCode.Add("@R14");
+            asmCode.Add("M=M-1"); // LCL = *(endFrame – 4) // restores LCL of the caller
+            asmCode.Add("A=M");
+            asmCode.Add("D=M");
+            asmCode.Add("@LCL");
+            asmCode.Add("M=D");
+
+            asmCode.Add("@R15"); // goto retAddr
+            asmCode.Add("A=M");
         }
 
         //Writes to the output file the assembly code that implements the given arithmetic command.
@@ -405,26 +507,38 @@ namespace VMtoHackTranslator
             asmCode.Add("M=M+1");
         }
 
-        public void Close(string filePath)
+        public void Close(string path, bool directory = false)
         {
             if(asmCode.Count > 0)
-                SaveAsmCodeFile(asmCode, filePath);
+            {
+                if(directory)
+                {
+                    try
+                    {
+                        string fileName = new DirectoryInfo(path).Name;
+                        File.WriteAllLines(path + @"\" + fileName + AssemblyFileExtension, asmCode);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+                else //single file
+                {
+                    try
+                    {
+                        string directoryPath = Path.GetDirectoryName(path);
+                        string fileName = Path.GetFileNameWithoutExtension(path);
+                        File.WriteAllLines(directoryPath + @"\" + fileName + AssemblyFileExtension, asmCode);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+            }
             else
                 Console.WriteLine("Nothing to write.");
-        }
-        
-        private static void SaveAsmCodeFile(List<string> hackCode, string filePath)
-        {
-            try
-            {
-                string directoryPath = Path.GetDirectoryName(filePath);
-                string fileName = Path.GetFileNameWithoutExtension(filePath);
-                File.WriteAllLines(directoryPath + @"\" + fileName + AssemblyFileExtension, hackCode);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
         }
     }
 }

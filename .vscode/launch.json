@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/net5.0/VM-to-Hack-Translator.dll",
-            "args": ["..\\08\\ProgramFlow\\FibonacciSeries\\FibonacciSeries.vm"],
+            "args": ["..\\08\\FunctionCalls\\SimpleFunction\\"],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
